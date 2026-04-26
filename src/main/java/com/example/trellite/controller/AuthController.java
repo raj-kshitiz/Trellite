@@ -1,4 +1,4 @@
-package com.example.trellite.auth;
+package com.example.trellite.controller;
 
 import com.example.trellite.model.User;
 import com.example.trellite.service.JwtService;

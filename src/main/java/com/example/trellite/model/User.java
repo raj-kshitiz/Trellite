@@ -1,4 +1,4 @@
-package org.noobie.springsecdemo.model;
+package com.example.trellite.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package org.noobie.springsecdemo.service;
+package com.example.trellite.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

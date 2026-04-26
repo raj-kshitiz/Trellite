@@ -1,8 +1,8 @@
-package org.noobie.springsecdemo.service;
+package com.example.trellite.service;
 
-import org.noobie.springsecdemo.dao.UserRepo;
-import org.noobie.springsecdemo.model.User;
-import org.noobie.springsecdemo.model.UserPrincipal;
+import com.example.trellite.repository.AuthRepo;
+import com.example.trellite.model.User;
+import com.example.trellite.model.UserPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -12,15 +12,15 @@ import org.springframework.stereotype.Service;
 public class MyUserDetailsService implements UserDetailsService {
 
     final
-    UserRepo userRepo;
+    AuthRepo authRepo;
 
-    public MyUserDetailsService(UserRepo userRepo) {
-        this.userRepo = userRepo;
+    public MyUserDetailsService(AuthRepo authRepo) {
+        this.authRepo = authRepo;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepo.findByUsername(username);
+        User user = authRepo.findByUsername(username);
         if(user == null){
             System.out.println("User not found - 404");
             throw new UsernameNotFoundException("User not found");

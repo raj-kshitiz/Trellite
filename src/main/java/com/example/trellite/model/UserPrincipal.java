@@ -1,4 +1,4 @@
-package org.noobie.springsecdemo.model;
+package com.example.trellite.model;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
