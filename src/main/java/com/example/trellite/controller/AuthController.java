@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@RestController("/auth")
 public class AuthController {
 
     private final AuthService authService;
@@ -45,5 +45,10 @@ public class AuthController {
                 return jwtService.generateToken(user.getUsername());
         }
         return "Login failed";
+    }
+
+    @PostMapping("/logout")
+    public String logout() {
+        return "Logout successful";
     }
 }
