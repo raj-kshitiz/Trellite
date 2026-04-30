@@ -16,3 +16,497 @@ trellite
     └── TrelliteApplication.java
 
 7 directories, 11 files
+
+SecurityConfig.java:
+
+package com.example.trellite.config;
+
+import org.springframework.context.annotation.Bean;
+
+import org.springframework.context.annotation.Configuration;
+
+import [org.springframework.security](http://org.springframework.security).authentication.AuthenticationManager;
+
+import [org.springframework.security](http://org.springframework.security).authentication.AuthenticationProvider;
+
+import [org.springframework.security](http://org.springframework.security).authentication.dao.DaoAuthenticationProvider;
+
+import [org.springframework.security](http://org.springframework.security).config.Customizer;
+
+import [org.springframework.security](http://org.springframework.security).config.annotation.authentication.configuration.AuthenticationConfiguration;
+
+import [org.springframework.security.config.annotation.web.builders](http://org.springframework.security.config.annotation.web.builders).HttpSecurity;
+
+import [org.springframework.security](http://org.springframework.security).config.annotation.web.configuration.EnableWebSecurity;
+
+import [org.springframework.security](http://org.springframework.security).config.http.SessionCreationPolicy;
+
+import [org.springframework.security](http://org.springframework.security).core.userdetails.UserDetailsService;
+
+import [org.springframework.security](http://org.springframework.security).crypto.bcrypt.BCryptPasswordEncoder;
+
+import [org.springframework.security](http://org.springframework.security).web.SecurityFilterChain;
+
+import [org.springframework.security](http://org.springframework.security).web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+
+@EnableWebSecurity
+
+public class SecurityConfig {
+
+    private final UserDetailsService userDetailsService;
+
+    private final JwtFilter jwtFilter;
+
+    public SecurityConfig(UserDetailsService userDetailsService, JwtFilter jwtFilter) {
+
+        this.userDetailsService = userDetailsService;
+
+        this.jwtFilter = jwtFilter;
+
+    }
+
+    @Bean
+
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+
+        /**
+
+         * not required with stateless
+
+         * {@Code http.formLogin(Customizer.withDefaults ());}
+
+         */
+
+        http
+
+                .csrf(customizer -> customizer.disable())
+
+                .authorizeHttpRequests(request -> request
+
+                        .requestMatchers("/register", "/login")
+
+                        .permitAll()
+
+                        .anyRequest()
+
+                        .authenticated()
+
+                )
+
+                .httpBasic(Customizer.withDefaults())
+
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                .authenticationProvider(authProvider())
+
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return [http.build](http://http.build)();
+
+    }
+
+    @Bean
+
+    public AuthenticationProvider authProvider() {
+
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+
+        provider.setPasswordEncoder(new BCryptPasswordEncoder(12)); // ? no encoding
+
+        return provider;
+
+    }
+
+    @Bean
+
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+
+        return config.getAuthenticationManager();
+
+    }
+
+}
+
+
+
+JwtFilter.java:
+
+@Component
+
+public class JwtFilter extends OncePerRequestFilter {
+
+    private final JwtService jwtService;
+
+    private final MyUserDetailsService userDetailsService;
+
+    public JwtFilter(JwtService jwtService, MyUserDetailsService userDetailsService) {
+
+        this.jwtService = jwtService;
+
+        this.userDetailsService = userDetailsService;
+
+    }
+
+    @Override
+
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        String authHeader = request.getHeader("Authorization");
+
+        String token = null;
+
+        String username = null;
+
+        if(authHeader != null && authHeader.startsWith("Bearer ")){
+
+            token = authHeader.substring(7);
+
+            username = jwtService.extractUserName(token);
+
+        }
+
+        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if(jwtService.validateToken(token, userDetails)) {
+
+                UsernamePasswordAuthenticationToken authToken =
+
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+
+            }
+
+        }
+
+        filterChain.doFilter(request, response);
+
+    }
+
+}
+
+
+
+AuthController:
+
+
+
+@RestController
+
+@RequestMapping("/auth")
+
+public class AuthController {
+
+    private final AuthService authService;
+
+    final
+
+    AuthenticationManager authenticationManager;
+
+    private final JwtService jwtService;
+
+    public AuthController(AuthService authService, AuthenticationManager authenticationManager, JwtService jwtService) {
+
+        this.authService = authService;
+
+        this.authenticationManager = authenticationManager;
+
+        this.jwtService = jwtService;
+
+    }
+
+    @PostMapping("/register")
+
+    public ResponseEntity<User> register(@RequestBody User user) {
+
+        User savedUser = authService.register(user);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+
+    }
+
+    @PostMapping("/login")
+
+    public String login(@RequestBody User user) {
+
+        Authentication authentication = authenticationManager
+
+                .authenticate(new UsernamePasswordAuthenticationToken(
+
+                        user.getUsername(),
+
+                        user.getPassword()
+
+                        )
+
+                );
+
+        if(authentication.isAuthenticated()){
+
+                return jwtService.generateToken(user.getUsername());
+
+        }
+
+        return "Login failed";
+
+    }
+
+    @PostMapping("/logout")
+
+    public String logout() {
+
+        //Only a placeholder for now
+
+        return "Logout successful";
+
+    }
+
+}
+
+
+
+UserPrincipal:
+
+package com.example.trellite.model;
+
+import org.jspecify.annotations.Nullable;
+
+import [org.springframework.security](http://org.springframework.security).core.GrantedAuthority;
+
+import [org.springframework.security](http://org.springframework.security).core.authority.SimpleGrantedAuthority;
+
+import [org.springframework.security](http://org.springframework.security).core.userdetails.UserDetails;
+
+import java.util.Collection;
+
+import java.util.Collections;
+
+public class UserPrincipal implements UserDetails {
+
+    private final User user;
+
+    public UserPrincipal(User user) {
+
+        this.user = user;
+
+    }
+
+    @Override
+
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+
+        return Collections.singleton(new SimpleGrantedAuthority("USER"));
+
+    }
+
+    @Override
+
+    public @Nullable String getPassword() {
+
+        return user.getPassword();
+
+    }
+
+    @Override
+
+    public String getUsername() {
+
+        return user.getUsername();
+
+    }
+
+}
+
+
+
+AuthService:
+
+package com.example.trellite.service;
+
+import com.example.trellite.repository.AuthRepo;
+
+import com.example.trellite.model.User;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import [org.springframework.security](http://org.springframework.security).crypto.bcrypt.BCryptPasswordEncoder;
+
+import org.springframework.stereotype.Service;
+
+@Service
+
+public class AuthService {
+
+    @Autowired
+
+    private AuthRepo authRepo;
+
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+
+    public User register(User user) {
+
+        user.setPassword(encoder.encode(user.getPassword()));
+
+        return [authRepo.save](http://authRepo.save)(user);
+
+    }
+
+}
+
+
+
+JwtService:package com.example.trellite.service;
+
+import [io.jsonwebtoken.Claims](http://io.jsonwebtoken.Claims);
+
+import io.jsonwebtoken.Jwts;
+
+import [io.jsonwebtoken.io](http://io.jsonwebtoken.io).Decoders;
+
+import [io.jsonwebtoken.security](http://io.jsonwebtoken.security).Keys;
+
+import [org.springframework.security](http://org.springframework.security).core.userdetails.UserDetails;
+
+import org.springframework.stereotype.Service;
+
+import javax.crypto.KeyGenerator;
+
+import javax.crypto.SecretKey;
+
+import [java.security](http://java.security).NoSuchAlgorithmException;
+
+import java.util.Base64;
+
+import [java.util.Date](http://java.util.Date);
+
+import java.util.HashMap;
+
+import [java.util.Map](http://java.util.Map);
+
+import java.util.function.Function;
+
+@Service
+
+public class JwtService {
+
+    public String generateSecretKey() {
+
+        try{
+
+            KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
+
+            SecretKey secretKey = keyGen.generateKey();
+
+            return  Base64.getEncoder().encodeToString(secretKey.getEncoded());
+
+        } catch (NoSuchAlgorithmException e) {
+
+            throw new RuntimeException(e);
+
+        }
+
+    }
+
+    private final String secretKey = generateSecretKey();
+
+    public String generateToken(String username) {
+
+        Map<String, Object> claims = new HashMap<>();
+
+        return Jwts.builder()
+
+                .claims(claims)
+
+                .subject(username)
+
+                .issuedAt(new Date(System.currentTimeMillis()))
+
+                .expiration(new Date(System.currentTimeMillis() + 1000*60*30))
+
+                .signWith(getKey())
+
+                .compact();
+
+    }
+
+    public SecretKey getKey(){
+
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+
+        return Keys.hmacShaKeyFor(keyBytes);
+
+    }
+
+    public String extractUserName(String token) {
+
+        // extract the username from jwt token
+
+        return extractClaim(token, Claims::getSubject);
+
+    }
+
+    private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
+
+        final Claims claims = extractAllClaims(token);
+
+        return claimResolver.apply(claims);
+
+    }
+
+    private Claims extractAllClaims(String token) {
+
+        return Jwts.parser()
+
+                .verifyWith((SecretKey) getKey())
+
+                .build()
+
+                .parseSignedClaims(token)
+
+                .getPayload();
+
+    }
+
+    public boolean validateToken(String token, UserDetails userDetails) {
+
+        final String userName = extractUserName(token);
+
+        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+
+    }
+
+    private boolean isTokenExpired(String token) {
+
+        return extractExpiration(token).before(new Date());
+
+    }
+
+    private Date extractExpiration(String token) {
+
+        return extractClaim(token, Claims::getExpiration);
+
+    }
+
+}
+
+
+
+This is the code for security that handles auth and i don't understand it, i want you to:
+
+
+
+
+
+1. explain it to me, very simply but also using the terms that i should know,
+
+
+
+1. and since i want to save it to refer later, create a .md file for me to so that i can look it up when i want, (keep in mind that this .md file will be referred in the future for various projects, so keep the language general and not project specific)
+
+2. i also want to able to make changes to these/debug files when required

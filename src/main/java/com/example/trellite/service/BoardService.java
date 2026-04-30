@@ -1,15 +1,18 @@
 package com.example.trellite.service;
 
+import com.example.trellite.dto.BoardCreateDTO;
 import com.example.trellite.dto.BoardResponseDTO;
 import com.example.trellite.dto.UserSummaryDTO;
 import com.example.trellite.model.Board;
 import com.example.trellite.model.User;
+import com.example.trellite.repository.AuthRepo;
 import com.example.trellite.repository.BoardRepo;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,9 +26,11 @@ import java.util.stream.Collectors;
 public class BoardService {
 
     public final BoardRepo boardRepo;
+    public final AuthRepo userRepo;
 
-    public BoardService(BoardRepo boardRepo) {
+    public BoardService(BoardRepo boardRepo, AuthRepo userRepo) {
         this.boardRepo = boardRepo;
+        this.userRepo = userRepo;
     }
 
     // Reusable private helper method in BoardService
@@ -54,7 +59,7 @@ public class BoardService {
         );
     }
 
-    public List<Board> getBoards(String boardName, String ownerUsername,
+    public List<BoardResponseDTO> getBoards(String boardName, String ownerUsername,
                                  List<String> memberUsernames, LocalDateTime createdAt) {
         Specification<Board> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -98,14 +103,34 @@ public class BoardService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return boardRepo.findAll(spec);
+        return boardRepo.findAll(spec).stream()
+                .map(this::mapToBoardResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public void createBoard(Board board) {
+    public BoardResponseDTO createBoard(BoardCreateDTO dto) {
+
+        // load the user and set as owner
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        User owner = userRepo.findByUsername(username);
+
+        Board board = Board.builder()
+                .boardName(dto.boardName())
+                .boardDescription(dto.boardDescription())
+                .owner(owner)
+                .build();
+
         boardRepo.save(board);
+        return mapToBoardResponseDTO(board);
     }
 
-    public List<Board> getAllBoards() {
-        return boardRepo.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+    public List<BoardResponseDTO> getAllBoards() {
+        return boardRepo.findAll()
+                .stream()
+                .map(this::mapToBoardResponseDTO)
+                .collect(Collectors.toList());
     }
 }

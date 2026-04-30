@@ -35,6 +35,7 @@ public class Board {
     private User owner;
 
     // Members of this board (Many-to-Many via board_members table)
+    @Builder.Default // makes lombok use the new HashSet<>() value initialized
     @ManyToMany
     @JoinTable(
             name = "board_members",

@@ -3,7 +3,7 @@ package com.example.trellite.dto;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-public record BoardResponseDTO<UserSummaryDTO>(
+public record BoardResponseDTO(
         Integer boardId,
         String boardName,
         String boardDescription,
