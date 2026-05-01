@@ -2,6 +2,7 @@ package com.example.trellite.service;
 
 import com.example.trellite.dto.BoardCreateDTO;
 import com.example.trellite.dto.BoardResponseDTO;
+import com.example.trellite.dto.BoardUpdateDTO;
 import com.example.trellite.dto.UserSummaryDTO;
 import com.example.trellite.model.Board;
 import com.example.trellite.model.User;
@@ -10,12 +11,10 @@ import com.example.trellite.repository.BoardRepo;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +32,7 @@ public class BoardService {
         this.userRepo = userRepo;
     }
 
-    // Reusable private helper method in BoardService
+    // Reusable private helper method in BoardService that is used to map a Board entity to a BoardResponseDTO
     private BoardResponseDTO mapToBoardResponseDTO(Board board) {
         UserSummaryDTO ownerDTO = new UserSummaryDTO(
                 board.getOwner().getId(),
@@ -133,4 +132,20 @@ public class BoardService {
                 .map(this::mapToBoardResponseDTO)
                 .collect(Collectors.toList());
     }
+
+    public BoardResponseDTO getBoard(Integer boardId) {
+        Board board = boardRepo.findById(boardId).orElseThrow(NullPointerException::new);
+        return mapToBoardResponseDTO(board);
+    }
+
+    public BoardResponseDTO updateBoard(Integer boardId, BoardUpdateDTO boardUpdateDTO) {
+        Board board = boardRepo.findById(boardId)
+                .orElseThrow(() -> new RuntimeException("Board not found"));
+        if (boardUpdateDTO.boardName() != null)
+            board.setBoardName(boardUpdateDTO.boardName());
+        if (boardUpdateDTO.boardDescription() != null)
+            board.setBoardDescription(boardUpdateDTO.boardDescription());
+        return mapToBoardResponseDTO(boardRepo.save(board));
+    }
 }
+

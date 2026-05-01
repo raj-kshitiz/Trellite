@@ -2,6 +2,7 @@ package com.example.trellite.controller;
 
 import com.example.trellite.dto.BoardCreateDTO;
 import com.example.trellite.dto.BoardResponseDTO;
+import com.example.trellite.dto.BoardUpdateDTO;
 import com.example.trellite.service.BoardService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,5 +44,21 @@ public class BoardController {
     public ResponseEntity<BoardResponseDTO> createBoard(@RequestBody BoardCreateDTO boardCreateDTO) {
         BoardResponseDTO createdBoard = boardService.createBoard(boardCreateDTO);
         return new ResponseEntity<>(createdBoard, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{boardId}")
+    public ResponseEntity<BoardResponseDTO> getBoard(@PathVariable Integer boardId) {
+        BoardResponseDTO board = boardService.getBoard(boardId);
+        return new ResponseEntity<>(board, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{boardId}")
+    public ResponseEntity<BoardResponseDTO> updateBoard(@PathVariable Integer boardId, @RequestBody BoardUpdateDTO boardUpdateDTO) {
+        try {
+            BoardResponseDTO updatedBoard = boardService.updateBoard(boardId, boardUpdateDTO);
+            return new ResponseEntity<>(updatedBoard, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
