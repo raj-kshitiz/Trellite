@@ -41,8 +41,9 @@ public class Task {
     private LocalDate deadline;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id", nullable = false)
-    private Board board;
+    @JoinColumn(name = "list_id", nullable = false)
+    private TaskList taskList;
+    ;
 
     // User this task is assigned to
     @ManyToOne(fetch = FetchType.LAZY)

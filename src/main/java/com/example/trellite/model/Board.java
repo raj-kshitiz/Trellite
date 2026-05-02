@@ -44,9 +44,10 @@ public class Board {
     )
     private Set<User> members = new HashSet<>();
 
-    // Tasks belonging to this board
+    // TaskLists belonging to this board
+    @Builder.Default
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Task> tasks = new HashSet<>();
+    private Set<TaskList> lists = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {

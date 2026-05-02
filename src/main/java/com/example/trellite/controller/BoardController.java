@@ -68,7 +68,7 @@ public class BoardController {
     public ResponseEntity<Void> deleteBoard(@PathVariable Integer boardId) {
         try {
             boardService.deleteBoard(boardId);
-            return new ResponseEntity<>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } catch (RuntimeException e) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
