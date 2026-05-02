@@ -54,11 +54,23 @@ public class BoardController {
 
     @PatchMapping("/{boardId}")
     public ResponseEntity<BoardResponseDTO> updateBoard(@PathVariable Integer boardId, @RequestBody BoardUpdateDTO boardUpdateDTO) {
+
+        // not the correct way to handle this, but it works for now -> correct way is to handle exceptions globally using @ControllerAdvice
         try {
             BoardResponseDTO updatedBoard = boardService.updateBoard(boardId, boardUpdateDTO);
             return new ResponseEntity<>(updatedBoard, HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @DeleteMapping("/{boardId}")
+    public ResponseEntity<Void> deleteBoard(@PathVariable Integer boardId) {
+        try {
+            boardService.deleteBoard(boardId);
+            return new ResponseEntity<>(HttpStatus.OK);
+        } catch (RuntimeException e) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 }

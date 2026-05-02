@@ -147,5 +147,9 @@ public class BoardService {
             board.setBoardDescription(boardUpdateDTO.boardDescription());
         return mapToBoardResponseDTO(boardRepo.save(board));
     }
+
+    public void deleteBoard(Integer boardId) {
+        boardRepo.deleteById(boardId);
+    }
 }
 
