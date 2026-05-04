@@ -1,7 +1,10 @@
 package com.example.trellite.model;
 
+import com.example.trellite.enums.Priority;
+import com.example.trellite.enums.TaskStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +16,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Task {
 
     @Id
@@ -43,7 +47,6 @@ public class Task {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "list_id", nullable = false)
     private TaskList taskList;
-    ;
 
     // User this task is assigned to
     @ManyToOne(fetch = FetchType.LAZY)
@@ -56,14 +59,3 @@ public class Task {
     }
 }
 
-enum TaskStatus {
-    TODO,
-    IN_PROGRESS,
-    DONE
-}
-
-enum Priority {
-    LOW,
-    MEDIUM,
-    HIGH
-}

@@ -1,5 +1,6 @@
 package com.example.trellite.model;
 
+import com.example.trellite.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,7 +56,3 @@ public class User {
     }
 }
 
-enum Role {
-    USER,
-    ADMIN
-}
