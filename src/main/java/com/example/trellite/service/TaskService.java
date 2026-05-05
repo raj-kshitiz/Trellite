@@ -134,12 +134,16 @@ public class TaskService {
     public TaskResponseDTO moveTask(Integer boardId, Integer listId, Integer taskId, MoveTaskDTO taskMoveDTO) {
         boardRepo.findById(boardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
-        TaskList list = listRepo.findById(listId)
+        listRepo.findById(listId)
                 .orElseThrow(() -> new ResourceNotFoundException("List not found"));
         Task task = taskRepo.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
-        task.setTaskList(list);
+        TaskList targetList = listRepo.findById(taskMoveDTO.listId())
+                .orElseThrow(() -> new ResourceNotFoundException("Target list not found"));
+
+        task.setTaskList(targetList);
+
         return mapToTaskResponseDTO(taskRepo.save(task));
     }
 

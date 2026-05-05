@@ -1,7 +1,6 @@
 package com.example.trellite.controller;
 
 import com.example.trellite.dto.*;
-import com.example.trellite.exception.ResourceNotFoundException;
 import com.example.trellite.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
