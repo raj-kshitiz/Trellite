@@ -8,6 +8,7 @@ import java.time.LocalDate;
 public record TaskCreateDTO(
         String title,
         String taskDescription,
+
         Priority priority,
 
         @JsonFormat(pattern = "dd-MM-yyyy")
