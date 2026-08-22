@@ -1,5 +1,6 @@
 package com.example.trellite.service;
 
+import com.example.trellite.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -21,14 +22,22 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    public String generateToken(String username) {
+    @Value("${jwt.expiration}")
+    private long expirationMs;
+
+    /**
+     * Mints an access token for a user. The userId claim rides along so a client can tell
+     * "is this card mine" by id instead of comparing username strings.
+     */
+    public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getId());
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(username)
+                .subject(user.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000*60*30))
+                .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getKey())
                 .compact();
     }
@@ -50,7 +59,7 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith((SecretKey) getKey())
+                .verifyWith(getKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -70,4 +79,3 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 }
-

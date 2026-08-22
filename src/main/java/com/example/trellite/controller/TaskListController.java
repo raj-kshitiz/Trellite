@@ -4,6 +4,7 @@ import com.example.trellite.dto.TaskListCreateDTO;
 import com.example.trellite.dto.TaskListResponseDTO;
 import com.example.trellite.dto.TaskListUpdateDTO;
 import com.example.trellite.service.TaskListService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,7 @@ public class TaskListController {
 
     @PostMapping
     public ResponseEntity<TaskListResponseDTO> createList(
-            @RequestBody TaskListCreateDTO taskListCreateDTO,
+            @Valid @RequestBody TaskListCreateDTO taskListCreateDTO,
              @PathVariable Integer boardId
     ) {
         TaskListResponseDTO createdList = taskListService.createList(taskListCreateDTO, boardId);
@@ -39,29 +40,19 @@ public class TaskListController {
 
     @PatchMapping("/{listId}")
     public ResponseEntity<TaskListResponseDTO> updateList(
-            @RequestBody TaskListUpdateDTO taskListUpdateDTO,
+            @Valid @RequestBody TaskListUpdateDTO taskListUpdateDTO,
             @PathVariable Integer listId,
             @PathVariable Integer boardId
     ) {
-        try {
-            TaskListResponseDTO updatedList = taskListService.updateList(taskListUpdateDTO, listId, boardId);
-            return new ResponseEntity<>(updatedList, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        TaskListResponseDTO updatedList = taskListService.updateList(taskListUpdateDTO, listId, boardId);
+        return new ResponseEntity<>(updatedList, HttpStatus.OK);
     }
 
-    // Controller
     @DeleteMapping("/{listId}")
     public ResponseEntity<Void> deleteList(
             @PathVariable Integer listId,
             @PathVariable Integer boardId) {
-        try {
-            taskListService.deleteList(listId);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        taskListService.deleteList(boardId, listId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
 }

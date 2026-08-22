@@ -33,3 +33,9 @@ build/
 .vscode/
 **/src/main/java/com/example/tree.txt
 **/src/main/java/com/example/trellite/controller/structure
+**/src/main/resources/application.properties
+CLAUDE.md
+
+### Local secrets ###
+.env
+!.env.example

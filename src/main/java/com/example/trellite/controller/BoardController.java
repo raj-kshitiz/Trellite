@@ -3,7 +3,9 @@ package com.example.trellite.controller;
 import com.example.trellite.dto.BoardCreateDTO;
 import com.example.trellite.dto.BoardResponseDTO;
 import com.example.trellite.dto.BoardUpdateDTO;
+import com.example.trellite.dto.MemberUpdateDTO;
 import com.example.trellite.service.BoardService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ public class BoardController {
         this.boardService = boardService;
     }
 
+    /** Only the caller's own boards — owned or joined. */
     @GetMapping
     public ResponseEntity<List<BoardResponseDTO>> getAllBoards() {
         return new ResponseEntity<>(boardService.getAllBoards(), HttpStatus.OK);
@@ -41,7 +44,9 @@ public class BoardController {
     }
 
     @PostMapping
-    public ResponseEntity<BoardResponseDTO> createBoard(@RequestBody BoardCreateDTO boardCreateDTO) {
+    public ResponseEntity<BoardResponseDTO> createBoard(
+            @Valid @RequestBody BoardCreateDTO boardCreateDTO
+    ) {
         BoardResponseDTO createdBoard = boardService.createBoard(boardCreateDTO);
         return new ResponseEntity<>(createdBoard, HttpStatus.CREATED);
     }
@@ -53,24 +58,35 @@ public class BoardController {
     }
 
     @PatchMapping("/{boardId}")
-    public ResponseEntity<BoardResponseDTO> updateBoard(@PathVariable Integer boardId, @RequestBody BoardUpdateDTO boardUpdateDTO) {
-
-        // not the correct way to handle this, but it works for now -> correct way is to handle exceptions globally using @ControllerAdvice
-        try {
-            BoardResponseDTO updatedBoard = boardService.updateBoard(boardId, boardUpdateDTO);
-            return new ResponseEntity<>(updatedBoard, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<BoardResponseDTO> updateBoard(
+            @PathVariable Integer boardId,
+            @Valid @RequestBody BoardUpdateDTO boardUpdateDTO
+    ) {
+       BoardResponseDTO updatedBoard = boardService.updateBoard(boardId, boardUpdateDTO);
+       return new ResponseEntity<>(updatedBoard, HttpStatus.OK);
     }
 
     @DeleteMapping("/{boardId}")
     public ResponseEntity<Void> deleteBoard(@PathVariable Integer boardId) {
-        try {
-            boardService.deleteBoard(boardId);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (RuntimeException e) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        boardService.deleteBoard(boardId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PatchMapping("/{boardId}/members/add")
+    public ResponseEntity<BoardResponseDTO> addMember(
+            @PathVariable Integer boardId,
+            @Valid @RequestBody MemberUpdateDTO memberUpdateDTO
+    ) {
+        BoardResponseDTO boardResponseDTO = boardService.addMember(boardId, memberUpdateDTO);
+        return new ResponseEntity<>(boardResponseDTO, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{boardId}/members/remove")
+    public ResponseEntity<BoardResponseDTO> removeMember(
+            @PathVariable Integer boardId,
+            @Valid @RequestBody MemberUpdateDTO memberUpdateDTO
+    ) {
+         BoardResponseDTO boardResponseDTO = boardService.removeMember(boardId, memberUpdateDTO);
+         return new ResponseEntity<>(boardResponseDTO, HttpStatus.OK);
     }
 }

@@ -15,9 +15,15 @@ public class UserPrincipal implements UserDetails {
         this.user = user;
     }
 
+    public Long getUserId() {
+        return user.getId();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(new SimpleGrantedAuthority("USER"));
+        // Reads the user's actual Role. This used to hard-code "USER", which made the
+        // ADMIN role inert. ROLE_ prefix so hasRole("ADMIN") works if it is ever used.
+        return Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 
     @Override

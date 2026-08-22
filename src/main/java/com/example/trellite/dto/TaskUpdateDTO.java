@@ -16,7 +16,6 @@ public record TaskUpdateDTO(
     LocalDate startDate,
 
     @JsonFormat(pattern = "dd-MM-yyyy")
-    LocalDate deadline,
-    Integer userId
+    LocalDate deadline
 ) {
 }
